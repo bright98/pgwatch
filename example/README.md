@@ -84,6 +84,8 @@ open pgwatch-report.html
 
 Reads all plans from the log file, analyzes them, and writes a self-contained HTML report to `pgwatch-report.html`.
 
+![HTML report sample](html-report-sample.png)
+
 ---
 
 ## Files
