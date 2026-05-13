@@ -1,0 +1,5 @@
+source: auto_explain
+log_file: /opt/homebrew/var/log/postgresql@18.log   # update this path — see README.md for how to find it
+interval: 30s                                        # flush findings every 30 seconds
+max_buffered_plans: 500
+output: terminal
