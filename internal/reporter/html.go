@@ -39,6 +39,7 @@ type htmlReport struct {
 type htmlFinding struct {
 	SeverityClass string // "error" | "warn" | "info"  — used as CSS modifier
 	SeverityLabel string // "ERROR" | "WARN" | "INFO"  — displayed in the badge
+	NodeID        int
 	NodeType      string
 	Message       string
 	Detail        string
@@ -99,6 +100,7 @@ func buildHTMLData(reports []QueryReport) htmlData {
 			hr.Findings = append(hr.Findings, htmlFinding{
 				SeverityClass: cls,
 				SeverityLabel: strings.ToUpper(cls),
+				NodeID:        f.NodeID,
 				NodeType:      f.NodeType,
 				Message:       f.Message,
 				Detail:        f.Detail,
@@ -267,14 +269,19 @@ body {
   font-family: 'SFMono-Regular', Consolas, monospace;
 }
 .finding-msg  { font-size: 0.875rem; font-weight: 600; color: #1a202c; }
-.finding-detail { font-size: 0.8rem; color: #4a5568; margin-top: 0.25rem; }
-.finding-suggestion {
-  font-size: 0.8rem; color: #2b6cb0;
-  margin-top: 0.375rem;
-  padding-left: 1.1rem;
-  position: relative;
+.finding-detail    { font-size: 0.8rem; color: #4a5568; margin-top: 0.3rem; }
+.finding-suggestion { font-size: 0.8rem; color: #2b6cb0; margin-top: 0.3rem; }
+.finding-key {
+  display: inline-block;
+  font-size: 0.6rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.07em;
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.25rem;
+  margin-right: 0.4rem;
+  vertical-align: baseline;
+  background: rgba(0,0,0,0.07);
+  color: inherit; opacity: 0.8;
 }
-.finding-suggestion::before { content: '→'; position: absolute; left: 0; color: #4299e1; }
 
 /* ── No issues ── */
 .no-issues {
@@ -362,10 +369,10 @@ details.plan-json pre {
         <li class="finding finding-{{.SeverityClass}}">
           <span class="badge badge-{{.SeverityClass}}">{{.SeverityLabel}}</span>
           <div class="finding-body">
-            {{if .NodeType}}<div class="finding-node">{{.NodeType}}</div>{{end}}
+            {{if .NodeType}}<div class="finding-node">{{if .NodeID}}node {{.NodeID}} · {{end}}{{.NodeType}}</div>{{end}}
             <div class="finding-msg">{{.Message}}</div>
-            {{if .Detail}}<div class="finding-detail">{{.Detail}}</div>{{end}}
-            {{if .Suggestion}}<div class="finding-suggestion">{{.Suggestion}}</div>{{end}}
+            {{if .Detail}}<div class="finding-detail"><span class="finding-key">detail</span>{{.Detail}}</div>{{end}}
+            {{if .Suggestion}}<div class="finding-suggestion"><span class="finding-key">suggestion</span>{{.Suggestion}}</div>{{end}}
           </div>
         </li>
         {{end}}
