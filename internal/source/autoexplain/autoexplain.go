@@ -155,6 +155,11 @@ func (s *Source) stream(ctx context.Context, f *os.File, ch chan<- source.RawPla
 		if err != nil || len(planJSON) == 0 {
 			continue
 		}
+		// auto_explain with log_format=json writes a bare object {…} while
+		// parser.Parse expects the array [{…}] that EXPLAIN FORMAT JSON produces.
+		if planJSON[0] == '{' {
+			planJSON = append([]byte{'['}, append(planJSON, ']')...)
+		}
 
 		select {
 		case ch <- source.RawPlan{
