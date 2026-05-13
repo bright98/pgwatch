@@ -1,5 +1,7 @@
 # pgwatch
 
+![pgwatch](pgwatch.png)
+
 A PostgreSQL slow query watcher and advisor daemon. It tails your PostgreSQL log file, parses `auto_explain` output, and reports actionable findings using [pgexplain](https://github.com/bright98/pgexplain) as the rule engine.
 
 ```
