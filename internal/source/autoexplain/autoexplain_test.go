@@ -129,6 +129,36 @@ func TestParseTimestamp(t *testing.T) {
 	}
 }
 
+// sampleLogBareObject uses the bare-object format that auto_explain emits
+// (no outer array), which must be normalized before parser.Parse can handle it.
+const sampleLogBareObject = `2026-05-10 15:00:00.000 UTC [9000] myuser@mydb LOG:  duration: 500.000 ms  plan:
+{
+  "Plan": {
+    "Node Type": "Seq Scan",
+    "Startup Cost": 0.00,
+    "Total Cost": 200.00,
+    "Plan Rows": 500,
+    "Plan Width": 8,
+    "Actual Rows": 500,
+    "Actual Total Time": 499.000,
+    "Actual Loops": 1
+  },
+  "Planning Time": 0.500,
+  "Execution Time": 500.000
+}
+`
+
+func TestPlans_BareObjectFormat(t *testing.T) {
+	path := tempLog(t, sampleLogBareObject)
+	plans := collect(t, path)
+	if len(plans) != 1 {
+		t.Fatalf("expected 1 plan from bare-object format, got %d", len(plans))
+	}
+	if plans[0].DurationMs != 500.000 {
+		t.Errorf("duration: got %.3f, want 500.000", plans[0].DurationMs)
+	}
+}
+
 func TestPlans_NonPlanLinesIgnored(t *testing.T) {
 	log := "2026-05-10 14:23:03.000 UTC [8823] user2@db2 LOG:  checkpoint complete: wrote 42 buffers\n"
 	path := tempLog(t, log)
