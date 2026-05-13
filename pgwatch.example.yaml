@@ -1,0 +1,34 @@
+# pgwatch configuration file
+# Copy this file to pgwatch.yaml and adjust the values for your environment.
+# Run: pgwatch run -c pgwatch.yaml
+
+# source selects which plan source pgwatch reads.
+# Currently only "auto_explain" is supported.
+source: auto_explain
+
+# log_file is the absolute path to the PostgreSQL log file.
+# PostgreSQL must have auto_explain enabled and log_format set to json.
+# See README for the required postgresql.conf settings.
+log_file: /var/log/postgresql/postgresql-17-main.log
+
+# interval controls how often buffered findings are flushed to the reporter.
+# In daemon mode (pgwatch run) a report is written every interval.
+# Accepts Go duration strings: 30m, 1h, 6h, 24h, etc.
+# Default: 1h
+interval: 1h
+
+# max_buffered_plans is the maximum number of plans held in memory between
+# report flushes. When the limit is hit, pgwatch flushes immediately rather
+# than waiting for the next interval tick, preventing unbounded memory growth
+# during traffic spikes.
+# Default: 1000
+max_buffered_plans: 1000
+
+# output selects the report format.
+# Supported values: terminal, json, html
+# Default: terminal
+output: terminal
+
+# out_file is the destination file for json and html output.
+# Required when output is "json" or "html"; ignored for "terminal".
+# out_file: /tmp/pgwatch-report.html

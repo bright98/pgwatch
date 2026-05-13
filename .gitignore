@@ -1,0 +1,12 @@
+# IDE
+.idea/
+.vscode/
+
+# Claude Code session data
+.claude/
+
+# Build output
+pgwatch
+
+# Config with real paths (use pgwatch.example.yaml as the template)
+pgwatch.yaml
