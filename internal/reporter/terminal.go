@@ -40,10 +40,10 @@ func (t *Terminal) Report(reports []QueryReport) error {
 		for _, f := range r.Findings {
 			fmt.Fprintf(t.w, "    [%s] node=%d (%s) — %s\n", f.Severity, f.NodeID, f.NodeType, f.Message)
 			if f.Detail != "" {
-				fmt.Fprintf(t.w, "           %s\n", f.Detail)
+				fmt.Fprintf(t.w, "           %-11s %s\n", "detail:", f.Detail)
 			}
 			if f.Suggestion != "" {
-				fmt.Fprintf(t.w, "           → %s\n", f.Suggestion)
+				fmt.Fprintf(t.w, "           %-11s %s\n", "suggestion:", f.Suggestion)
 			}
 		}
 		fmt.Fprintln(t.w)
