@@ -56,7 +56,7 @@ Update the `log_file` value in `pgwatch.yaml` and `pgwatch.html.yaml` to match y
 ## 4. Run pgwatch in daemon mode (terminal output)
 
 ```bash
-pgwatch run -c example/pgwatch.yaml
+pgwatch run -c example/pgwatch.terminal.yaml
 ```
 
 pgwatch tails the PostgreSQL log, parses `auto_explain` JSON plan blocks, and prints rule violations to the terminal every 30 seconds.
@@ -90,7 +90,7 @@ Reads all plans from the log file, analyzes them, and writes a self-contained HT
 
 | File | Description |
 |---|---|
-| `pgwatch.yaml` | Daemon config — tails the log and prints to terminal |
+| `pgwatch.terminal.yaml` | Daemon config — tails the log and prints to terminal |
 | `pgwatch.html.yaml` | Report config — reads the full log and writes an HTML report |
 
 ---
