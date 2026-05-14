@@ -3,6 +3,7 @@ package autoexplain
 import (
 	"context"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -156,6 +157,65 @@ func TestPlans_BareObjectFormat(t *testing.T) {
 	}
 	if plans[0].DurationMs != 500.000 {
 		t.Errorf("duration: got %.3f, want 500.000", plans[0].DurationMs)
+	}
+}
+
+// appendToLog appends content to path, creating the file if it does not exist.
+func appendToLog(t *testing.T, path, content string) {
+	t.Helper()
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	if _, err := f.WriteString(content); err != nil {
+		t.Fatal(err)
+	}
+}
+
+const rotationPlan1 = `2026-05-10 14:30:00.000 UTC [1001] user1@db1 LOG:  duration: 100.000 ms  plan:
+[{"Plan":{"Node Type":"Seq Scan","Startup Cost":0.00,"Total Cost":10.00,"Plan Rows":100,"Plan Width":8,"Actual Rows":100,"Actual Total Time":99.0,"Actual Loops":1},"Planning Time":0.5,"Execution Time":100.0}]
+`
+
+const rotationPlan2 = `2026-05-10 14:31:00.000 UTC [1002] user2@db2 LOG:  duration: 200.000 ms  plan:
+[{"Plan":{"Node Type":"Seq Scan","Startup Cost":0.00,"Total Cost":20.00,"Plan Rows":200,"Plan Width":8,"Actual Rows":200,"Actual Total Time":199.0,"Actual Loops":1},"Planning Time":0.5,"Execution Time":200.0}]
+`
+
+func TestPlans_LogRotation(t *testing.T) {
+	dir := t.TempDir()
+	logPath := filepath.Join(dir, "postgres.log")
+
+	// Start with an empty file; Plans() will seek to its EOF.
+	if err := os.WriteFile(logPath, nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	src := New(Config{LogFile: logPath, Tail: true})
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	ch, err := src.Plans(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Write plan 1 to the original file and wait for it.
+	appendToLog(t, logPath, rotationPlan1)
+	p1 := <-ch
+	if p1.DurationMs != 100.0 {
+		t.Errorf("plan 1 duration: got %.1f, want 100.0", p1.DurationMs)
+	}
+
+	// Simulate log rotation: rename the old file away, create a fresh one.
+	if err := os.Rename(logPath, logPath+".old"); err != nil {
+		t.Fatal(err)
+	}
+	appendToLog(t, logPath, rotationPlan2) // creates the new file at the same path
+
+	// stream should detect the rotation and pick up plan 2 from the new file.
+	p2 := <-ch
+	if p2.DurationMs != 200.0 {
+		t.Errorf("plan 2 duration after rotation: got %.1f, want 200.0", p2.DurationMs)
 	}
 }
 
