@@ -21,6 +21,19 @@ No database connection is required. pgwatch is a pure log reader — it never ex
 
 ---
 
+## Table of Contents
+
+- [Rule engine: pgexplain](#rule-engine-pgexplain)
+- [Prerequisites](#prerequisites)
+- [Setting up auto_explain](#setting-up-auto_explain)
+- [Installation](#installation)
+- [Quick start](#quick-start)
+- [Output formats](#output-formats)
+- [Config reference](#config-reference)
+- [License](#license)
+
+---
+
 ## Rule engine: pgexplain
 
 pgwatch delegates all plan analysis to [pgexplain](https://github.com/bright98/pgexplain), a standalone Go library I wrote as a companion to this project. It provides a parser and an advisor with 8 built-in rules:
