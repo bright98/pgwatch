@@ -7,12 +7,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// version is set at build time via -ldflags "-X main.version=v1.2.3".
+// Falls back to "dev" for local builds.
+var version = "dev"
+
 var cfgPath string
 
 func main() {
 	root := &cobra.Command{
-		Use:   "pgwatch",
-		Short: "PostgreSQL slow query watcher and advisor",
+		Use:     "pgwatch",
+		Version: version,
+		Short:   "PostgreSQL slow query watcher and advisor",
 		Long: `pgwatch connects to a PostgreSQL database, finds the slowest queries via
 pg_stat_statements, explains each one, and reports actionable findings using
 the pgexplain rule engine.`,
