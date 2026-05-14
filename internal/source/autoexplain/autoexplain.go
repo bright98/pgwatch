@@ -108,11 +108,13 @@ func (s *Source) Plans(ctx context.Context) (<-chan source.RawPlan, error) {
 
 // stream is the background goroutine that reads lines from f and sends parsed plans to ch.
 func (s *Source) stream(ctx context.Context, f *os.File, ch chan<- source.RawPlan) {
-	defer f.Close()
 	defer close(ch)
 
-	r := bufio.NewReaderSize(f, 1<<20) // 1 MB read buffer
-	var pending string                  // accumulates a partial line across reads
+	cur := f
+	defer func() { cur.Close() }()
+
+	r := bufio.NewReaderSize(cur, 1<<20) // 1 MB read buffer
+	var pending string                   // accumulates a partial line across reads
 
 	for {
 		if ctx.Err() != nil {
@@ -126,7 +128,17 @@ func (s *Source) stream(ctx context.Context, f *os.File, ch chan<- source.RawPla
 			if !s.cfg.Tail {
 				return
 			}
-			// Wait for the log writer to append more data before retrying.
+			// Detect log rotation: if the path now points to a different file,
+			// drain the old fd to exhaustion first (already at EOF), then switch.
+			if isRotated(cur, s.cfg.LogFile) {
+				if newF, openErr := os.Open(s.cfg.LogFile); openErr == nil {
+					cur.Close()
+					cur = newF
+					r.Reset(cur)
+					pending = ""
+				}
+				// New file not ready yet — fall through and sleep.
+			}
 			select {
 			case <-ctx.Done():
 				return
@@ -240,4 +252,19 @@ func parseTimestamp(s string) time.Time {
 		}
 	}
 	return time.Now()
+}
+
+// isRotated reports whether the file at path has been replaced since f was opened.
+// Returns true when the path is gone (rotation in progress) or resolves to a
+// different inode, indicating a new log file has taken over.
+func isRotated(f *os.File, path string) bool {
+	fi1, err := f.Stat()
+	if err != nil {
+		return false
+	}
+	fi2, err := os.Stat(path)
+	if err != nil {
+		return true // path gone — new file not yet created
+	}
+	return !os.SameFile(fi1, fi2)
 }
