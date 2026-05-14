@@ -49,7 +49,7 @@ Common locations:
 | Linux (apt) | `/var/log/postgresql/postgresql-<version>-main.log` |
 | Linux (systemd) | `journalctl -u postgresql` (no file; use `log_destination = csvlog`) |
 
-Update the `log_file` value in `pgwatch.yaml` and `pgwatch.html.yaml` to match your system.
+Update the `log_file` value in all three config files to match your system.
 
 ---
 
@@ -88,12 +88,51 @@ Reads all plans from the log file, analyzes them, and writes a self-contained HT
 
 ---
 
+## 6. Generate a one-shot JSON report
+
+```bash
+pgwatch report -c example/pgwatch.json.yaml
+```
+
+Writes findings to `pgwatch-report.json`. Useful for piping into other tools or ingesting into a dashboard.
+
+Example output:
+
+```json
+{
+  "generated_at": "2026-05-13T14:41:40Z",
+  "reports": [
+    {
+      "rank": 1,
+      "timestamp": "2026-05-13T14:41:40Z",
+      "user": "haleh",
+      "database": "pagila",
+      "duration_ms": 10.48,
+      "source": "auto_explain",
+      "findings": [
+        {
+          "severity": "WARN",
+          "node_id": 1,
+          "node_type": "Sort",
+          "message": "row estimate for Sort was off by 3163x (overestimate: planned 15815, got 5)",
+          "detail": "The planner estimated 15815 rows but this node produced 5 (loops=1).",
+          "suggestion": "Run ANALYZE on the tables involved in this node to refresh planner statistics."
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
 ## Files
 
 | File | Description |
 |---|---|
 | `pgwatch.terminal.yaml` | Daemon config — tails the log and prints to terminal |
 | `pgwatch.html.yaml` | Report config — reads the full log and writes an HTML report |
+| `pgwatch.json.yaml` | Report config — reads the full log and writes a JSON report |
 
 ---
 

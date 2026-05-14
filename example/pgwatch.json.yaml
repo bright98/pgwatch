@@ -1,0 +1,6 @@
+source: auto_explain
+log_file: /opt/homebrew/var/log/postgresql@18.log   # update this path — see README.md for how to find it
+interval: 30s
+max_buffered_plans: 500
+output: json
+out_file: ./pgwatch-report.json
