@@ -46,7 +46,7 @@ type Config struct {
 	MaxBufferedPlans int `yaml:"max_buffered_plans"`
 
 	// Output selects the report destination.
-	// Supported values: "terminal", "json".
+	// Supported values: "terminal", "json", "html".
 	// Default: "terminal".
 	Output string `yaml:"output"`
 

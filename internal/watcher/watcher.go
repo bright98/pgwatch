@@ -1,9 +1,11 @@
 package watcher
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"log/slog"
+	"slices"
 	"time"
 
 	"github.com/bright98/pgexplain/advisor"
@@ -99,19 +101,29 @@ func (w *Watcher) Run(ctx context.Context) error {
 }
 
 // flush parses and analyzes each buffered plan then calls the reporter.
+// Plans are sorted slowest-first so rank 1 always means the worst offender.
+// Returns immediately without calling the reporter when the buffer is empty.
 func (w *Watcher) flush(plans []source.RawPlan) error {
+	if len(plans) == 0 {
+		return nil
+	}
+	slices.SortFunc(plans, func(a, b source.RawPlan) int {
+		return cmp.Compare(b.DurationMs, a.DurationMs) // descending
+	})
 	var reports []reporter.QueryReport
-	for i, p := range plans {
+	rank := 1
+	for _, p := range plans {
 		plan, err := parser.Parse(p.PlanJSON)
 		if err != nil {
 			slog.Warn("plan parse failed, skipping", "source", p.SourceName, "err", err)
 			continue
 		}
 		reports = append(reports, reporter.QueryReport{
-			Rank:     i + 1,
+			Rank:     rank,
 			Plan:     p,
 			Findings: w.adv.Analyze(plan),
 		})
+		rank++
 	}
 	if err := w.reporter.Report(reports); err != nil {
 		return fmt.Errorf("watcher: report: %w", err)

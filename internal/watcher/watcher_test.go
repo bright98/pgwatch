@@ -63,10 +63,10 @@ func (m *mockReporter) Report(r []reporter.QueryReport) error {
 
 func testConfig() *config.Config {
 	return &config.Config{
-		Source:        "auto_explain",
-		LogFile:       "/tmp/pg.log",
+		Source:   "auto_explain",
+		LogFile:  "/tmp/pg.log",
 		Interval: time.Hour,
-		Output:        "terminal",
+		Output:   "terminal",
 	}
 }
 
@@ -84,6 +84,7 @@ func rawPlan(durMs float64) source.RawPlan {
 // --- tests ---
 
 func TestRunOnce_HappyPath(t *testing.T) {
+	// Feed 1500 ms first, 2000 ms second — flush must sort slowest-first.
 	src := &mockSource{plans: []source.RawPlan{rawPlan(1500), rawPlan(2000)}}
 	rep := &mockReporter{}
 
@@ -96,6 +97,10 @@ func TestRunOnce_HappyPath(t *testing.T) {
 	}
 	if rep.got[0].Rank != 1 || rep.got[1].Rank != 2 {
 		t.Errorf("unexpected ranks: %d, %d", rep.got[0].Rank, rep.got[1].Rank)
+	}
+	if rep.got[0].Plan.DurationMs < rep.got[1].Plan.DurationMs {
+		t.Errorf("expected rank 1 to be slowest: got %.0f ms before %.0f ms",
+			rep.got[0].Plan.DurationMs, rep.got[1].Plan.DurationMs)
 	}
 }
 
